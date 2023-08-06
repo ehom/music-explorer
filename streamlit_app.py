@@ -88,11 +88,14 @@ st.header(selection)
 
 recommendations = spotify.get_recommendations(selection)
 
+
+MEDIUM_QUALITY = 1
+
 def show_tracks():
     for track in recommendations['tracks']:
         left_col, right_col = st.columns([2, 4])
         with left_col:
-            st.image(track['album']['images'][1]['url'], width=150)
+            st.image(track['album']['images'][MEDIUM_QUALITY]['url'], width=150)
         with right_col:
             annotated_text((track['name'], ""))
             annotated_text((track['artists'][0]['name'], "artist"))
@@ -112,7 +115,7 @@ def show_covers(tracks):
 
         for columnIndex, cover in enumerate(covers):
             with cols[columnIndex]:
-                st.image(cover['album']['images'][0]['url'], width=150)
+                st.image(cover['album']['images'][MEDIUM_QUALITY]['url'], width=150)
 
 
 left_tab, right_tab = st.tabs(["Tracks", "Covers"])
