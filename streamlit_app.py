@@ -2,7 +2,6 @@ import json
 import requests
 import streamlit as st
 from annotated_text import annotated_text
-import os
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4, width=80)
@@ -14,8 +13,9 @@ def saveTo(filename, object):
     with open(filename, "w") as f:
         json.dump(object, f, indent=4)
 
-CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
 
 class Spotify:
     def __init__(self, client_id, client_secret):
