@@ -8,15 +8,11 @@ pp = PrettyPrinter(indent=4, width=80)
 
 MEDIUM_QUALITY = 1
 MUSICAL_NOTES = "\U0001F3B6"
-st.set_page_config("Discover Music", page_icon=MUSICAL_NOTES)
 
-
-def saveTo(filename, object):
-    with open(filename, "w") as f:
-        json.dump(object, f, indent=4)
 
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+
 
 class Spotify:
     def __init__(self, client_id, client_secret):
@@ -84,6 +80,12 @@ class Spotify:
         return recommendations_for_genres
 
 
+def show_spotify_logo():
+    SPOTIFY_FULL_LOGO_URL = "https://developer.spotify.com/images/guidelines/design/logos.svg"
+    LOGO_URL = "https://developer.spotify.com/images/guidelines/design/icon4@2x.png"
+
+    st.image(LOGO_URL, width=70)
+
 def show_tracks(tracks):
     for track in tracks:
         left_col, right_col = st.columns([2, 4])
@@ -113,7 +115,7 @@ def show_tracks(tracks):
 
 
 def show_covers(tracks):
-    BATCH_SIZE = 3
+    BATCH_SIZE = 4
     for i in range(0, len(tracks), BATCH_SIZE):
         covers = tracks[i: i + BATCH_SIZE]
         cols = st.columns(BATCH_SIZE)
@@ -126,6 +128,9 @@ def show_covers(tracks):
 def view():
     with st.sidebar:
         selection = st.radio("**Genres**:", st.session_state['genres'])
+
+        st.divider()
+        show_spotify_logo()
 
     if st.session_state['genre'] is None:
         st.session_state['genre'] = selection
@@ -145,9 +150,17 @@ def view():
 
     with right_tab:
         show_covers(recommendations['tracks'])
+        st.divider()
+
+    show_spotify_logo()
 
 
 def main():
+    st.set_page_config("Discover Music", page_icon=MUSICAL_NOTES,
+                       menu_items={
+                           "About": "(To be added)"
+                       })
+
     global spotify
 
     spotify = Spotify(CLIENT_ID, CLIENT_SECRET)
@@ -156,6 +169,8 @@ def main():
         object = spotify.get_available_genre_seeds()
         st.session_state['genres'] = object['genres']
         st.session_state['genre'] = None
+
+    print("draw page")
 
     view()
 
