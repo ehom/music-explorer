@@ -1,7 +1,6 @@
-import json
-import requests
 import streamlit as st
 from annotated_text import annotated_text
+from singleton import spotify
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4, width=80)
@@ -10,81 +9,12 @@ MEDIUM_QUALITY = 1
 MUSICAL_NOTES = "\U0001F3B6"
 
 
-CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
-CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
-
-
-class Spotify:
-    def __init__(self, client_id, client_secret):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = self.get_access_token()
-
-    def get_access_token(self):
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-
-        token_data = {
-            "grant_type": "client_credentials"
-        }
-
-        url = f"https://accounts.spotify.com/api/token"
-        response = requests.post(url, data=token_data, headers=headers, auth=(CLIENT_ID, CLIENT_SECRET))
-        access_token = None
-        if response.status_code == 200:
-            object = response.json()
-
-            # pp.pprint(object)
-            print("got access token")
-
-            access_token = object['access_token']
-            # TODO: keep track of time.
-            # each access_token expires in 1 hour (3600 seconds)
-        else:
-            print("status_code:", response.status_code)
-            # TODO: throw exception?
-
-        return access_token
-
-    def send_request(self, url):
-        # Check periodically to see if we need to refresh the access token
-        # maybe we should have a get_access_token() method and at that time
-        # check to make sure it hasn't expired.
-        # if so, renew immediately.
-
-        headers = {
-            "Authorization": f"Bearer {self.access_token}",
-        }
-        response = requests.get(url, headers=headers)
-
-        object = {}
-
-        if response.status_code == 200:
-            object = response.json()
-            # pp.pprint(object)
-            print("sent request...ok")
-        else:
-            print("status_code:", response.status_code)
-
-        return object
-
-    def get_available_genre_seeds(self):
-        url_available_genre_seeds = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
-        available_genre_seeds = self.send_request(url_available_genre_seeds)
-        return available_genre_seeds
-
-    def get_recommendations(self, genre):
-        url_recommendations_for_genres = f"https://api.spotify.com/v1/recommendations?seed_genres={genre}"
-        recommendations_for_genres = self.send_request(url_recommendations_for_genres)
-        return recommendations_for_genres
-
-
 def show_spotify_logo():
     SPOTIFY_FULL_LOGO_URL = "https://developer.spotify.com/images/guidelines/design/logos.svg"
     LOGO_URL = "https://developer.spotify.com/images/guidelines/design/icon4@2x.png"
 
     st.image(LOGO_URL, width=70)
+
 
 def show_tracks(tracks):
     for track in tracks:
@@ -160,10 +90,6 @@ def main():
                        menu_items={
                            "About": "(To be added)"
                        })
-
-    global spotify
-
-    spotify = Spotify(CLIENT_ID, CLIENT_SECRET)
 
     if 'genres' not in st.session_state:
         object = spotify.get_available_genre_seeds()
