@@ -10,10 +10,10 @@ MEDIUM_QUALITY = 1
 MUSICAL_NOTES = "\U0001F3B6"
 st.set_page_config("Discover Music", page_icon=MUSICAL_NOTES)
 
+
 def saveTo(filename, object):
     with open(filename, "w") as f:
         json.dump(object, f, indent=4)
-
 
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
@@ -43,7 +43,7 @@ class Spotify:
             print("got access token")
 
             access_token = object['access_token']
-            # TODO: keep track of time. 
+            # TODO: keep track of time.
             # each access_token expires in 1 hour (3600 seconds)
         else:
             print("status_code:", response.status_code)
@@ -82,28 +82,6 @@ class Spotify:
         url_recommendations_for_genres = f"https://api.spotify.com/v1/recommendations?seed_genres={genre}"
         recommendations_for_genres = self.send_request(url_recommendations_for_genres)
         return recommendations_for_genres
-
-    def play(self, track_uri, track_offset = 0):
-        headers = {
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "uris": [track_uri],
-            "offset": {
-                "position": track_offset
-            }
-        }
-        play_url = "https://api.spotify.com/v1/me/player/play"
-        response = requests.put(play_url, headers=headers, data=data)
-
-        if response.status_code == 200:
-            print("spotify play returns:")
-            pp.pprint(response.json())
-            return response
-        else:
-            print("spotify play request failed:", response.status_code)
-        return {}
 
 
 def show_tracks(tracks):
@@ -149,7 +127,7 @@ def view():
     with st.sidebar:
         selection = st.radio("**Genres**:", st.session_state['genres'])
 
-    if st.session_state['genre'] == None:
+    if st.session_state['genre'] is None:
         st.session_state['genre'] = selection
     elif st.session_state['genre'] == selection:
         print("no change in genre. don't redraw")
@@ -174,7 +152,7 @@ def main():
 
     spotify = Spotify(CLIENT_ID, CLIENT_SECRET)
 
-    if not 'genres' in st.session_state:
+    if 'genres' not in st.session_state:
         object = spotify.get_available_genre_seeds()
         st.session_state['genres'] = object['genres']
         st.session_state['genre'] = None
