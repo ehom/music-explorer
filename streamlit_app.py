@@ -19,8 +19,12 @@ def show_spotify_logo():
 def show_tracks(tracks):
     for track in tracks:
         left_col, right_col = st.columns([2, 4])
+
+        image_index = MEDIUM_QUALITY if len(track['album']['images']) > 1 else 0
+
         with left_col:
-            st.image(track['album']['images'][MEDIUM_QUALITY]['url'], width=150)
+            st.image(track['album']['images'][image_index]['url'], width=150)
+
         with right_col:
             annotated_text((track['name'], " "))
             arr = []
@@ -31,10 +35,6 @@ def show_tracks(tracks):
                 arr.append(" ")
                 arr.append((str(track['popularity']), "popularity"))
             annotated_text(arr)
-
-            # annotated_text((track['name'], ""))
-            # annotated_text((track['artists'][0]['name'], "artist"))
-            # annotated_text((track['album']['release_date'], "release date"))
 
             st.write("")
 
@@ -52,7 +52,8 @@ def show_covers(tracks):
 
         for columnIndex, cover in enumerate(covers):
             with cols[columnIndex]:
-                st.image(cover['album']['images'][MEDIUM_QUALITY]['url'], width=150)
+                image_index = MEDIUM_QUALITY if len(cover['album']['images']) > 1 else 0
+                st.image(cover['album']['images'][image_index]['url'], width=150)
 
 
 def view():
