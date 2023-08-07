@@ -6,6 +6,7 @@ from annotated_text import annotated_text
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4, width=80)
 
+MEDIUM_QUALITY = 1
 MUSICAL_NOTES = "\U0001F3B6"
 st.set_page_config("Discover Music", page_icon=MUSICAL_NOTES)
 
@@ -37,7 +38,10 @@ class Spotify:
         access_token = None
         if response.status_code == 200:
             object = response.json()
-            pp.pprint(object)
+
+            # pp.pprint(object)
+            print("got access token")
+
             access_token = object['access_token']
             # TODO: keep track of time. 
             # each access_token expires in 1 hour (3600 seconds)
@@ -48,6 +52,11 @@ class Spotify:
         return access_token
 
     def send_request(self, url):
+        # Check periodically to see if we need to refresh the access token
+        # maybe we should have a get_access_token() method and at that time
+        # check to make sure it hasn't expired.
+        # if so, renew immediately.
+
         headers = {
             "Authorization": f"Bearer {self.access_token}",
         }
@@ -57,71 +66,121 @@ class Spotify:
 
         if response.status_code == 200:
             object = response.json()
-            pp.pprint(object)
+            # pp.pprint(object)
+            print("sent request...ok")
         else:
             print("status_code:", response.status_code)
+
         return object
 
     def get_available_genre_seeds(self):
         url_available_genre_seeds = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
-        response = self.send_request(url_available_genre_seeds)
-        return response
+        available_genre_seeds = self.send_request(url_available_genre_seeds)
+        return available_genre_seeds
 
     def get_recommendations(self, genre):
         url_recommendations_for_genres = f"https://api.spotify.com/v1/recommendations?seed_genres={genre}"
-        response = self.send_request(url_recommendations_for_genres)
-        return response
+        recommendations_for_genres = self.send_request(url_recommendations_for_genres)
+        return recommendations_for_genres
+
+    def play(self, track_uri, track_offset = 0):
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "uris": [track_uri],
+            "offset": {
+                "position": track_offset
+            }
+        }
+        play_url = "https://api.spotify.com/v1/me/player/play"
+        response = requests.put(play_url, headers=headers, data=data)
+
+        if response.status_code == 200:
+            print("spotify play returns:")
+            pp.pprint(response.json())
+            return response
+        else:
+            print("spotify play request failed:", response.status_code)
+        return {}
 
 
-# todo
-# 1. save access token in session state
-# 2. check periodically to see if we need to refresh the access token
-
-spotify = Spotify(CLIENT_ID, CLIENT_SECRET)
-
-object = spotify.get_available_genre_seeds()
-
-with st.sidebar:
-    selection = st.radio("**Genres**:", object['genres'])
-
-st.header(selection)
-
-recommendations = spotify.get_recommendations(selection)
-
-
-MEDIUM_QUALITY = 1
-
-def show_tracks():
-    for track in recommendations['tracks']:
+def show_tracks(tracks):
+    for track in tracks:
         left_col, right_col = st.columns([2, 4])
         with left_col:
             st.image(track['album']['images'][MEDIUM_QUALITY]['url'], width=150)
         with right_col:
-            annotated_text((track['name'], ""))
-            annotated_text((track['artists'][0]['name'], "artist"))
-            annotated_text((track['album']['release_date'], "release date"))
+            annotated_text((track['name'], " "))
+            arr = []
+            arr.append((track['artists'][0]['name'], "artist"))
+            arr.append(" ")
+            arr.append((track['album']['release_date'], "release date"))
             if track['popularity'] > 0:
-                annotated_text((str(track['popularity']), "popularity"))
+                arr.append(" ")
+                arr.append((str(track['popularity']), "popularity"))
+            annotated_text(arr)
+
+            # annotated_text((track['name'], ""))
+            # annotated_text((track['artists'][0]['name'], "artist"))
+            # annotated_text((track['album']['release_date'], "release date"))
+
+            st.write("")
 
             if track["preview_url"] is not None and len(track['preview_url']) > 0:
-                st.markdown(f"[Preview]({track['preview_url']}) Track {track['track_number']}")
+                st.audio(track['preview_url'])
+                annotated_text((f"Track {track['track_number']}", "preview"))
         st.divider()
 
 
 def show_covers(tracks):
-    for i in range(0, len(tracks), 3):
-        covers = tracks[i: i + 3]
-        cols = st.columns(3)
+    BATCH_SIZE = 3
+    for i in range(0, len(tracks), BATCH_SIZE):
+        covers = tracks[i: i + BATCH_SIZE]
+        cols = st.columns(BATCH_SIZE)
 
         for columnIndex, cover in enumerate(covers):
             with cols[columnIndex]:
                 st.image(cover['album']['images'][MEDIUM_QUALITY]['url'], width=150)
 
 
-left_tab, right_tab = st.tabs(["Tracks", "Covers"])
+def view():
+    with st.sidebar:
+        selection = st.radio("**Genres**:", st.session_state['genres'])
 
-with left_tab:
-    show_tracks()
+    if st.session_state['genre'] == None:
+        st.session_state['genre'] = selection
+    elif st.session_state['genre'] == selection:
+        print("no change in genre. don't redraw")
+    else:
+        st.session_state['genre'] = selection
 
-with right_tab:
-    show_covers(recommendations['tracks'])
+    recommendations = spotify.get_recommendations(selection)
+
+    st.header(selection)
+
+    left_tab, right_tab = st.tabs(["Tracks", "Covers"])
+
+    with left_tab:
+        show_tracks(recommendations['tracks'])
+
+    with right_tab:
+        show_covers(recommendations['tracks'])
+
+
+def main():
+    global spotify
+
+    spotify = Spotify(CLIENT_ID, CLIENT_SECRET)
+
+    if not 'genres' in st.session_state:
+        object = spotify.get_available_genre_seeds()
+        st.session_state['genres'] = object['genres']
+        st.session_state['genre'] = None
+
+    view()
+
+
+if __name__ == "__main__":
+    main()
