@@ -120,9 +120,12 @@ def main():
                        })
 
     if 'genres' not in st.session_state:
-        object = spotify.get_available_genre_seeds()
-        st.session_state['genres'] = object['genres']
-        st.session_state['genre'] = None
+        results = spotify.get_available_genre_seeds()
+        if 'genres' in results:
+            st.session_state['genres'] = results['genres']
+            st.session_state['genre'] = None
+        else:
+            print("Could not get available genres")
 
     print("draw page")
 
