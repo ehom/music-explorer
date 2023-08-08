@@ -7,7 +7,7 @@ pp = PrettyPrinter(indent=4, width=80)
 
 MEDIUM_QUALITY = 1
 MUSICAL_NOTES = "\U0001F3B6"
-
+EMOJIS_BOMB = "\U0001F4A3"
 
 def show_spotify_logo():
     SPOTIFY_FULL_LOGO_URL = "https://developer.spotify.com/images/guidelines/design/logos.svg"
@@ -86,10 +86,10 @@ def view():
 
     if st.session_state['genre'] is None:
         st.session_state['genre'] = selection
-    elif st.session_state['genre'] == selection:
-        print("no change in genre. don't redraw")
-    else:
+    elif st.session_state['genre'] != selection:
         st.session_state['genre'] = selection
+    else:
+       pass
 
     recommendations = spotify.get_recommendations(selection)
 
@@ -120,12 +120,14 @@ def main():
                        })
 
     if 'genres' not in st.session_state:
+        st.session_state['genres'] = []
+        st.session_state['genre'] = None
+
         results = spotify.get_available_genre_seeds()
         if 'genres' in results:
             st.session_state['genres'] = results['genres']
-            st.session_state['genre'] = None
         else:
-            print("Could not get available genres")
+            st.error("Could not get available genres", icon=EMOJIS_BOMB)
 
     print("draw page")
 
