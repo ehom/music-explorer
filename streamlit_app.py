@@ -18,9 +18,24 @@ def show_spotify_logo():
 
 def show_tracks(tracks):
     for track in tracks:
-        left_col, right_col = st.columns([2, 4])
+        # check if track is worth showing
+        # TODO put this track validation code in a
+        # separate function
 
-        image_index = MEDIUM_QUALITY if len(track['album']['images']) > 1 else 0
+        if len(track['name']) == 0:
+            print("no track name")
+            continue
+
+        images = track['album']['images']
+        count = len(images)
+
+        if count == 0:
+            print("no cover art")
+            continue
+
+        image_index = MEDIUM_QUALITY if count >= 2 else 0
+
+        left_col, right_col = st.columns([2, 4])
 
         with left_col:
             st.image(track['album']['images'][image_index]['url'], width=150)
@@ -52,8 +67,14 @@ def show_covers(tracks):
 
         for columnIndex, cover in enumerate(covers):
             with cols[columnIndex]:
-                image_index = MEDIUM_QUALITY if len(cover['album']['images']) > 1 else 0
-                st.image(cover['album']['images'][image_index]['url'], width=150)
+                # check for image first
+                images = cover['album']['images']
+                count = len(images)
+                if count == 0:
+                    print("no cover art!!!")
+                else:
+                    image_index = MEDIUM_QUALITY if count >= 2 else 0
+                    st.image(cover['album']['images'][image_index]['url'], width=150)
 
 
 def view():
@@ -77,10 +98,16 @@ def view():
     left_tab, right_tab = st.tabs(["Tracks", "Covers"])
 
     with left_tab:
-        show_tracks(recommendations['tracks'])
+        if 'tracks' in recommendations:
+            show_tracks(recommendations['tracks'])
+        else:
+            print("can't find tracks in recommendation")
 
     with right_tab:
-        show_covers(recommendations['tracks'])
+        if 'tracks' in recommendations:
+            show_covers(recommendations['tracks'])
+        else:
+            print("can't find tracks in recommendation")
         st.divider()
 
     show_spotify_logo()
