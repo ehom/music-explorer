@@ -98,16 +98,17 @@ def view():
     left_tab, right_tab = st.tabs(["Tracks", "Covers"])
 
     with left_tab:
-        if 'tracks' in recommendations:
+        if recommendations and 'tracks' in recommendations:
             show_tracks(recommendations['tracks'])
         else:
             print("can't find tracks in recommendation")
+            st.error("Recommendations is empty")
 
     with right_tab:
-        if 'tracks' in recommendations:
+        if recommendations and 'tracks' in recommendations:
             show_covers(recommendations['tracks'])
         else:
-            print("can't find tracks in recommendation")
+            st.error("Recommendations is empty")
         st.divider()
 
     show_spotify_logo()
