@@ -113,6 +113,12 @@ def view():
     show_spotify_logo()
 
 
+@st.cache_data
+def get_available_genres():
+    results = spotify.get_available_genre_seeds()
+    return results
+   
+ 
 def main():
     st.set_page_config("Discover Music", page_icon=MUSICAL_NOTES,
                        menu_items={
@@ -123,7 +129,7 @@ def main():
         st.session_state['genres'] = []
         st.session_state['genre'] = None
 
-        results = spotify.get_available_genre_seeds()
+        results = get_available_genres()
         if 'genres' in results:
             st.session_state['genres'] = results['genres']
         else:
